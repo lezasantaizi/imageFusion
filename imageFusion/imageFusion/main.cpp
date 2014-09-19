@@ -22,11 +22,10 @@ void genGaussian(int win_size,float sigma,float** arr)
 		{
 			int r = i*i + j*j;
 			float k = -r/(2*sigma*sigma);
-			arr[i+win_size][j+win_size] = exp(k)/(2*3.1415926*sigma*sigma);
+			arr[i+win_size][j+win_size] = exp(k)/sqrt(2*3.1415926*sigma*sigma);
 
 			arrSum += arr[i+win_size][j+win_size];
 		}
-
 	}
 
 	for (int i = -win_size ; i <= win_size; i++)
@@ -40,7 +39,7 @@ void genGaussian(int win_size,float sigma,float** arr)
 	}
 }
 
-void gaussianblurFunc(int win_size, float sigma, Mat src, float** arr, Mat& result)
+void gaussianblurFunc(int win_size, float sigma, Mat& src, float** arr, Mat& result)
 {
 	genGaussian(win_size,sigma,arr);
 	result.create(Size(src.cols,src.rows),src.type());
@@ -48,7 +47,7 @@ void gaussianblurFunc(int win_size, float sigma, Mat src, float** arr, Mat& resu
 	{
 		for (int col = 0 ; col <src.cols; col++)
 		{
-			int sumRed = 0,sumGreen = 0,sumBlue = 0;
+			float sumRed = 0,sumGreen = 0,sumBlue = 0;
 			for (int subrow = -win_size;subrow<=win_size;subrow++)
 			{
 				int srcrow = row+subrow;
@@ -77,7 +76,7 @@ void gaussianblurFunc(int win_size, float sigma, Mat src, float** arr, Mat& resu
 }
 
 
-void downSampleFunc(int win_size, float sigma, Mat src, float** arr, Mat& result)
+void downSampleFunc(int win_size, float sigma, Mat& src, float** arr, Mat& result)
 {
 	genGaussian(win_size,sigma,arr);
 	int width = src.cols;
@@ -134,7 +133,7 @@ void downSampleFunc(int win_size, float sigma, Mat src, float** arr, Mat& result
 	}
 }
 
-void expendSampleFunc(int win_size, Mat src, float** arr, Mat& result)
+void expendSampleFunc(int win_size, Mat& src, float** arr, Mat& result)
 {
 	int width = src.cols;
 	int height = src.rows;
@@ -188,6 +187,17 @@ void expendSampleFunc(int win_size, Mat src, float** arr, Mat& result)
 	}   
 }
 
+void printMat(Mat result)
+{
+	for (int i = 129 ;i < 135; i++)
+	{
+		for (int j = 69 ;j < 75;j++)
+		{
+			printf("%d,%d,%d  ",result.at<Vec3b>(i,j)[2],result.at<Vec3b>(i,j)[1],result.at<Vec3b>(i,j)[0]);
+		}
+		printf("\n");
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -233,43 +243,46 @@ int main(int argc, char** argv)
 			arr[i][j] = 0; 
 		}
 	}
-
-
-	vector<Mat>firstSampleArr;
-	firstSampleArr.push_back(src);
-
+	vector<Mat>firstSampleArr;	
 	vector<Mat>secondSampleArr;
-	Mat firstSample, secondSample;
 
+	Mat firstSample, secondSample;
+	gaussianblurFunc(win_size, sigma,src, arr, firstSample);
+	firstSampleArr.push_back(firstSample);
 	for (int j = 0 ;j<s ;j++)
 	{
-		gaussianblurFunc(win_size, pow(k,j)*sigma,firstSampleArr[j], arr, firstSample);
-		firstSampleArr.push_back(firstSample);
+		Mat firstSample1;		
+		gaussianblurFunc(win_size, pow(k,1)*sigma,firstSampleArr[j], arr, firstSample1);	
+		firstSampleArr.push_back(firstSample1);
 	}
 	downSampleFunc(win_size,pow(k,1)*sigma, firstSampleArr[s-1], arr, secondSample);
 	secondSampleArr.push_back(secondSample);
 	for (int j = 0 ;j<s ;j++)
 	{
-		gaussianblurFunc(win_size, pow(k,j)*sigma,secondSampleArr[j], arr, secondSample);
-		secondSampleArr.push_back(secondSample);
+		Mat secondSample1;	
+		gaussianblurFunc(win_size, pow(k,1)*sigma,secondSampleArr[j], arr, secondSample1);
+		secondSampleArr.push_back(secondSample1);
 	}
 
 
 	Mat result ;
-	result.create(Size(firstSampleArr[0].cols,firstSampleArr[0].rows),firstSampleArr[0].type());
+	result.create(Size(firstSampleArr[0].cols,firstSampleArr[0].rows),secondSampleArr[0].type());
 	for (int i = 0 ;i < firstSampleArr[0].rows;i++ )
 	{
 		for (int j = 0; j< firstSampleArr[0].cols; j++)
 		{
-			result.at<Vec3b>(i,j)[2] = firstSampleArr[3].at<Vec3b>(i,j)[2] - firstSampleArr[2].at<Vec3b>(i,j)[2];
-			result.at<Vec3b>(i,j)[1] = firstSampleArr[3].at<Vec3b>(i,j)[1] - firstSampleArr[2].at<Vec3b>(i,j)[1];
-			result.at<Vec3b>(i,j)[0] = firstSampleArr[3].at<Vec3b>(i,j)[0] - firstSampleArr[2].at<Vec3b>(i,j)[0];
+			int temp1 = firstSampleArr[1].at<Vec3b>(i,j)[2] - firstSampleArr[0].at<Vec3b>(i,j)[2];
+			int temp2 = firstSampleArr[1].at<Vec3b>(i,j)[1] - firstSampleArr[0].at<Vec3b>(i,j)[1];
+			int temp3 = firstSampleArr[1].at<Vec3b>(i,j)[0] - firstSampleArr[0].at<Vec3b>(i,j)[0];
+			result.at<Vec3b>(i,j)[2] = temp1<0?0:temp1+50;
+			result.at<Vec3b>(i,j)[1] = temp2<0?0:temp2+50;
+			result.at<Vec3b>(i,j)[0] = temp3<0?0:temp3+50;
 		}
 	}
-
-
 	namedWindow("hello2");
-	imshow("hello2",firstSampleArr[s-1]);
+	imshow("hello2",firstSampleArr[0]);
+	namedWindow("hello21");
+	imshow("hello21",firstSampleArr[3]);
 
 	namedWindow("hello3");
 	imshow("hello3",secondSampleArr[0]);
