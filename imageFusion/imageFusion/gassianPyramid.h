@@ -4,6 +4,7 @@
 #include<iostream>
 #include "../3rdparty/include/opencv.hpp"
 #include<math.h>
+#include <vector>
 using namespace std;
 using namespace cv;
 
@@ -19,14 +20,22 @@ public:
 	int win_size;
 	float sigma ;
 	float** arr;
-	double sigma2;  
-	double sigma4;
+	float sigma2;  
+	float sigma4;
+	vector<vector<Mat>> pyramidImage;
  
 
-	GassianPyramid(int octave, int s);
+	GassianPyramid(int octaveSize, int levelSize,int winSize,float sigmaValue);
 	~GassianPyramid();
 
-	void genGassianFunc();
-	void gassianBlur();
+	void genGassianFunc(float sigmaValue);
+	void gassianBlur(float sigma, Mat src, Mat& result);
+	void downSampleFunc(float sigma, Mat src, Mat& result);
+	void expendSampleFunc(float sigma, Mat src, Mat& result);
+	void printMat(Mat result);
+
+	void createPyramid(Mat src);
+	void getDoG(Mat src1, Mat src2, Mat& result);
+};
 
 #endif
