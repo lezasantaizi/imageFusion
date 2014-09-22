@@ -28,10 +28,10 @@ public:
 	GassianPyramid(int octaveSize, int levelSize,int winSize,float sigmaValue);
 	~GassianPyramid();
 
-	void genGassianFunc(float sigmaValue);
-	void gassianBlur(float sigma, Mat src, Mat& result);
-	void downSampleFunc(float sigma, Mat src, Mat& result);
-	void expendSampleFunc(float sigma, Mat src, Mat& result);
+	void genGassianFunc(float sigmaValue,int winSize);
+	void gassianBlur(float sigma,int winSize, Mat src, Mat& result);
+	void downSampleFunc(Mat src, Mat& result);
+	void expendSampleFunc(Mat src, Mat& result);
 	void printMat(Mat result);
 
 	void createPyramid(Mat src);

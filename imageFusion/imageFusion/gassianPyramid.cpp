@@ -39,10 +39,11 @@ GassianPyramid::~GassianPyramid()
 
 }
 
-void GassianPyramid::genGassianFunc(float sigmaValue)
+void GassianPyramid::genGassianFunc(float sigmaValue,int winSize)
 {	
 	float arrSum = 0;
 	sigma = sigmaValue;
+	win_size = winSize;
 	for (int i = -win_size ; i <= win_size; i++)
 	{
 		for (int j = -win_size ; j<= win_size; j++)
@@ -66,9 +67,9 @@ void GassianPyramid::genGassianFunc(float sigmaValue)
 	}
 }
 
-void GassianPyramid::gassianBlur(float sigma, Mat src, Mat& result)
+void GassianPyramid::gassianBlur(float sigma,int winSize, Mat src, Mat& result)
 {
-	genGassianFunc(sigma);
+	genGassianFunc(sigma,winSize);
 	result.create(Size(src.cols,src.rows),src.type());
 	for (int row = 0 ;row <src.rows ;row++)
 	{
@@ -102,13 +103,65 @@ void GassianPyramid::gassianBlur(float sigma, Mat src, Mat& result)
 	}
 }
 
-void GassianPyramid::downSampleFunc(float sigma, Mat src, Mat& result)
+void GassianPyramid::downSampleFunc(Mat src, Mat& result)
 {
+	arr[0][0] = arr[0][4] = arr[4][0] = arr[4][4] = 1;
+	arr[0][1] = arr[0][3] = arr[1][0] = arr[1][4] = arr[3][0] = arr[3][4] = arr[4][1] = arr[4][3] = 4;
+	arr[0][2] = arr[2][0] = arr[4][2] = arr[2][4] = 6;
+	arr[1][1] = arr[1][3] = arr[3][1] = arr[3][3] = 16;
+	arr[1][2] = arr[2][1] = arr[2][3] = arr[3][2] = 24;
+	arr[2][2] = 36;
+
+	for (int i = -2; i<=2; i++)
+	{
+		for (int j = -2; j<=2; j++ )
+		{
+			arr[i+2][j+2] /= 16;
+		}
+	}
+
+
+
+
+
 	int width = src.cols;
 	int height = src.rows;
 	int ow = width/2;  
 	int oh = height/2;  
 	result.create(Size(ow,oh),src.type());
+	Mat temp;
+	temp.create(Size(width,height),src.type());
+
+	for (int row = 0 ;row <src.rows ;row++)
+	{
+		for (int col = 0 ; col <src.cols; col++)
+		{
+			float sumRed = 0,sumGreen = 0,sumBlue = 0;
+			for (int subrow = -win_size;subrow<=win_size;subrow++)
+			{
+				int srcrow = row+subrow;
+				if (srcrow<0||srcrow>=src.rows)
+				{
+					srcrow = row;
+				}
+				for (int subcol = -win_size;subcol<=win_size;subcol++)
+				{
+					int srccol = col+subcol;
+					if (srccol<0||srccol>=src.cols)
+					{
+						srccol = col;
+					}
+					sumRed += arr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[2];
+					sumGreen += arr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[1];
+					sumBlue += arr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[0];
+
+				}
+			}
+			temp.at<Vec3b>(row,col)[2] = sumRed;
+			temp.at<Vec3b>(row,col)[1] = sumGreen;
+			temp.at<Vec3b>(row,col)[0] = sumBlue;
+		}
+	}
 
 	int inRow=0, inCol = 0;  		
 	for(int row=0; row<oh; row++) 
@@ -125,91 +178,160 @@ void GassianPyramid::downSampleFunc(float sigma, Mat src, Mat& result)
 			{  
 				inCol = width;  
 			}  
+			result.at<Vec3b>(row,col)[2]= temp.at<Vec3b>(inRow,inCol)[2];
+			result.at<Vec3b>(row,col)[1]= temp.at<Vec3b>(inRow,inCol)[1];
+			result.at<Vec3b>(row,col)[0]= temp.at<Vec3b>(inRow,inCol)[0];
+			//float sumRed = 0, sumGreen = 0, sumBlue = 0;  
+			//for(int subRow = -win_size; subRow <= win_size; subRow++) 
+			//{  
+			//	int inRowOff = inRow + subRow;  
+			//	if(inRowOff >= height || inRowOff < 0) 
+			//	{  
+			//		inRowOff = 0;  
+			//	}  
+			//	for(int subCol = -win_size; subCol <= win_size; subCol++) 
+			//	{  
+			//		int inColOff = inCol + subCol;  
+			//		if(inColOff >= width || inColOff < 0) 
+			//		{  
+			//			inColOff = 0;  
+			//		}  
 
-			float sumRed = 0, sumGreen = 0, sumBlue = 0;  
-			for(int subRow = -win_size; subRow <= win_size; subRow++) 
-			{  
-				int inRowOff = inRow + subRow;  
-				if(inRowOff >= height || inRowOff < 0) 
-				{  
-					inRowOff = 0;  
-				}  
-				for(int subCol = -win_size; subCol <= win_size; subCol++) 
-				{  
-					int inColOff = inCol + subCol;  
-					if(inColOff >= width || inColOff < 0) 
-					{  
-						inColOff = 0;  
-					}  
+			//		int red = src.at<Vec3b>(inRowOff,inColOff)[2];
+			//		int green = src.at<Vec3b>(inRowOff,inColOff)[1];
+			//		int blue = src.at<Vec3b>(inRowOff,inColOff)[0];
+			//		sumRed += arr[subRow + win_size][subCol + win_size] * red;  
+			//		sumGreen += arr[subRow + win_size][subCol + win_size] * green;  
+			//		sumBlue += arr[subRow + win_size][subCol + win_size] * blue;  
 
-					int red = src.at<Vec3b>(inRowOff,inColOff)[2];
-					int green = src.at<Vec3b>(inRowOff,inColOff)[1];
-					int blue = src.at<Vec3b>(inRowOff,inColOff)[0];
-					sumRed += arr[subRow + win_size][subCol + win_size] * red;  
-					sumGreen += arr[subRow + win_size][subCol + win_size] * green;  
-					sumBlue += arr[subRow + win_size][subCol + win_size] * blue;  
-
-				}  
-			}  
-			result.at<Vec3b>(row,col)[2] = sumRed;
-			result.at<Vec3b>(row,col)[1] = sumGreen;
-			result.at<Vec3b>(row,col)[0] = sumBlue;
+			//	}  
+			//}  
+			//result.at<Vec3b>(row,col)[2] = sumRed;
+			//result.at<Vec3b>(row,col)[1] = sumGreen;
+			//result.at<Vec3b>(row,col)[0] = sumBlue;
 		}  
 	}
 }
 
-void GassianPyramid::expendSampleFunc(float sigma, Mat src, Mat& result)
+void GassianPyramid::expendSampleFunc(Mat src, Mat& result)
 {
+	arr[0][0] = arr[0][4] = arr[4][0] = arr[4][4] = 1;
+	arr[0][1] = arr[0][3] = arr[1][0] = arr[1][4] = arr[3][0] = arr[3][4] = arr[4][1] = arr[4][3] = 4;
+	arr[0][2] = arr[2][0] = arr[4][2] = arr[2][4] = 6;
+	arr[1][1] = arr[1][3] = arr[3][1] = arr[3][3] = 16;
+	arr[1][2] = arr[2][1] = arr[2][3] = arr[3][2] = 24;
+	arr[2][2] = 36;
+
+	for (int i = -2; i<=2; i++)
+	{
+		for (int j = -2; j<=2; j++ )
+		{
+			arr[i+2][j+2] /= 16;
+		}
+	}
+
 	int width = src.cols;
 	int height = src.rows;
 	int ow = 2*width;  
 	int oh =2*height; 
+	Mat temp;
+	temp.create(Size(ow,oh),src.type());
+	
 	result.create(Size(ow,oh),src.type());
 	for(int row=0; row<oh; row++) 
 	{  
 		for(int col=0; col<ow; col++) 
 		{  
-			float sumRed = 0, sumGreen = 0, sumBlue = 0;  
-			for(int subRow = -win_size; subRow <= win_size; subRow++) 
-			{  
-				double srcRow = (row + subRow)/2.0;  
-				double j = floor(srcRow);  
-				double t = srcRow - j;   
-				if(t > 0) 
-				{  
-					continue;  
-				}  
-				if(srcRow >= height || srcRow < 0) 
-				{  
-					srcRow = 0;  
-				}  
-				for(int subCol = -win_size; subCol <= win_size; subCol++) 
-				{  
-					double srcCol = (col + subCol)/2.0;  
-					j = floor(srcCol);  
-					t = srcCol - j;  
-					if(t > 0) 
-					{  
-						continue;  
-					}  
-					if(srcCol >= width || srcCol < 0) 
-					{  
-						srcCol = 0;  
-					}   
+			int inRow = row/2;  
+			int inCol = col/2;
 
-					int red = src.at<Vec3b>(srcRow,srcCol)[2];
-					int green = src.at<Vec3b>(srcRow,srcCol)[1];
-					int blue = src.at<Vec3b>(srcRow,srcCol)[0];
-					sumRed += arr[subRow + win_size][subCol + win_size] * red;  
-					sumGreen += arr[subRow + win_size][subCol + win_size] * green;  
-					sumBlue += arr[subRow + win_size][subCol + win_size] * blue;  
-				}  
-			}  
+			if(row - inRow*2 > 0 || col - inCol*2 > 0) 
+			{  
+				temp.at<Vec3b>(row,col)[2] = 0;
+				temp.at<Vec3b>(row,col)[1] = 0;
+				temp.at<Vec3b>(row,col)[0] = 0;
+				continue;
+			} 
+
+			temp.at<Vec3b>(row,col)[2] = src.at<Vec3b>(inRow,inCol)[2];
+			temp.at<Vec3b>(row,col)[1] = src.at<Vec3b>(inRow,inCol)[1];
+			temp.at<Vec3b>(row,col)[0] = src.at<Vec3b>(inRow,inCol)[0];
+
+			//float sumRed = 0, sumGreen = 0, sumBlue = 0;  
+			//for(int subRow = -win_size; subRow <= win_size; subRow++) 
+			//{  
+			//	double srcRow = (row + subRow)/2.0;  
+			//	double j = floor(srcRow);  
+			//	double t = srcRow - j;   
+			//	if(t > 0) 
+			//	{  
+			//		continue;  
+			//	}  
+			//	if(srcRow >= height || srcRow < 0) 
+			//	{  
+			//		srcRow = 0;  
+			//	}  
+			//	for(int subCol = -win_size; subCol <= win_size; subCol++) 
+			//	{  
+			//		double srcCol = (col + subCol)/2.0;  
+			//		j = floor(srcCol);  
+			//		t = srcCol - j;  
+			//		if(t > 0) 
+			//		{  
+			//			continue;  
+			//		}  
+			//		if(srcCol >= width || srcCol < 0) 
+			//		{  
+			//			srcCol = 0;  
+			//		}   
+
+			//		int red = src.at<Vec3b>(srcRow,srcCol)[2];
+			//		int green = src.at<Vec3b>(srcRow,srcCol)[1];
+			//		int blue = src.at<Vec3b>(srcRow,srcCol)[0];
+			//		sumRed += arr[subRow + win_size][subCol + win_size] * red;  
+			//		sumGreen += arr[subRow + win_size][subCol + win_size] * green;  
+			//		sumBlue += arr[subRow + win_size][subCol + win_size] * blue;  
+			//	}  
+			//}  
+			//result.at<Vec3b>(row,col)[2] = sumRed;
+			//result.at<Vec3b>(row,col)[1] = sumGreen;
+			//result.at<Vec3b>(row,col)[0] = sumBlue;
+		}  
+	}  
+
+
+
+
+	for (int row = 0 ;row <temp.rows ;row++)
+	{
+		for (int col = 0 ; col <temp.cols; col++)
+		{
+			float sumRed = 0,sumGreen = 0,sumBlue = 0;
+			for (int subrow = -win_size;subrow<=win_size;subrow++)
+			{
+				int srcrow = row+subrow;
+				if (srcrow<0||srcrow>=temp.rows)
+				{
+					srcrow = row;
+				}
+				for (int subcol = -win_size;subcol<=win_size;subcol++)
+				{
+					int srccol = col+subcol;
+					if (srccol<0||srccol>=temp.cols)
+					{
+						srccol = col;
+					}
+					sumRed += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[2];
+					sumGreen += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[1];
+					sumBlue += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[0];
+
+				}
+			}
 			result.at<Vec3b>(row,col)[2] = sumRed;
 			result.at<Vec3b>(row,col)[1] = sumGreen;
 			result.at<Vec3b>(row,col)[0] = sumBlue;
-		}  
-	}   
+		}
+	}
 }
 
 void GassianPyramid::printMat(Mat result)
@@ -226,17 +348,19 @@ void GassianPyramid::printMat(Mat result)
 
 void GassianPyramid::createPyramid(Mat src)
 {
-	gassianBlur(sigma,src,pyramidImage[0][0]);
+	gassianBlur(sigma,1,src,pyramidImage[0][0]);
 	for (int i = 0; i<octave; i++)
 	{
 		
 		for (int j = 0; j<s-1; j++)
 		{
-			gassianBlur(pow(k,j+1)*sigma,pyramidImage[i][0],pyramidImage[i][j+1]);
+			gassianBlur(pow(k,j+1)*sigma,1,pyramidImage[i][0],pyramidImage[i][j+1]);
 		}
 		if (i < octave - 1)
 		{
-			downSampleFunc(sigma, pyramidImage[i][s-1],pyramidImage[i+1][0]);
+			Mat temp;
+			gassianBlur(sigma,1,pyramidImage[i][s-1],temp);
+			downSampleFunc(temp,pyramidImage[i+1][0]);
 		}
 
 	}
