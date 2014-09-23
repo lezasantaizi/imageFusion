@@ -194,7 +194,6 @@ void GassianPyramid::gassianBlur2(float sigma,int winSize, Mat src, Mat& result)
 
 void GassianPyramid::gassianBlur3(float sigma,int winSize, Mat src, Mat& result)
 {
-	//genGassianFunc(sigma,winSize);
 	double *kernel = new double[2*winSize+1];
 	double scale = -0.5/(sigma*sigma);  
 	const double PI = 3.141592653;  
@@ -290,63 +289,11 @@ void GassianPyramid::gassianBlur3(float sigma,int winSize, Mat src, Mat& result)
 
 void GassianPyramid::downSampleFunc(Mat src, Mat& result)
 {
-	arr[0][0] = arr[0][4] = arr[4][0] = arr[4][4] = 1;
-	arr[0][1] = arr[0][3] = arr[1][0] = arr[1][4] = arr[3][0] = arr[3][4] = arr[4][1] = arr[4][3] = 4;
-	arr[0][2] = arr[2][0] = arr[4][2] = arr[2][4] = 6;
-	arr[1][1] = arr[1][3] = arr[3][1] = arr[3][3] = 16;
-	arr[1][2] = arr[2][1] = arr[2][3] = arr[3][2] = 24;
-	arr[2][2] = 36;
-
-	for (int i = -2; i<=2; i++)
-	{
-		for (int j = -2; j<=2; j++ )
-		{
-			arr[i+2][j+2] /= 16;
-		}
-	}
-
-
-
-
-
 	int width = src.cols;
 	int height = src.rows;
 	int ow = width/2;  
 	int oh = height/2;  
 	result.create(Size(ow,oh),src.type());
-	Mat temp;
-	temp.create(Size(width,height),src.type());
-
-	for (int row = 0 ;row <src.rows ;row++)
-	{
-		for (int col = 0 ; col <src.cols; col++)
-		{
-			float sumRed = 0,sumGreen = 0,sumBlue = 0;
-			for (int subrow = -win_size;subrow<=win_size;subrow++)
-			{
-				int srcrow = row+subrow;
-				if (srcrow<0||srcrow>=src.rows)
-				{
-					srcrow = row;
-				}
-				for (int subcol = -win_size;subcol<=win_size;subcol++)
-				{
-					int srccol = col+subcol;
-					if (srccol<0||srccol>=src.cols)
-					{
-						srccol = col;
-					}
-					sumRed += arr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[2];
-					sumGreen += arr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[1];
-					sumBlue += arr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[0];
-
-				}
-			}
-			temp.at<Vec3b>(row,col)[2] = sumRed;
-			temp.at<Vec3b>(row,col)[1] = sumGreen;
-			temp.at<Vec3b>(row,col)[0] = sumBlue;
-		}
-	}
 
 	int inRow=0, inCol = 0;  		
 	for(int row=0; row<oh; row++) 
@@ -363,9 +310,9 @@ void GassianPyramid::downSampleFunc(Mat src, Mat& result)
 			{  
 				inCol = width;  
 			}  
-			result.at<Vec3b>(row,col)[2]= temp.at<Vec3b>(inRow,inCol)[2];
-			result.at<Vec3b>(row,col)[1]= temp.at<Vec3b>(inRow,inCol)[1];
-			result.at<Vec3b>(row,col)[0]= temp.at<Vec3b>(inRow,inCol)[0];
+			result.at<Vec3b>(row,col)[2]= src.at<Vec3b>(inRow,inCol)[2];
+			result.at<Vec3b>(row,col)[1]= src.at<Vec3b>(inRow,inCol)[1];
+			result.at<Vec3b>(row,col)[0]= src.at<Vec3b>(inRow,inCol)[0];
 			//float sumRed = 0, sumGreen = 0, sumBlue = 0;  
 			//for(int subRow = -win_size; subRow <= win_size; subRow++) 
 			//{  
