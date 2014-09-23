@@ -120,6 +120,7 @@ int main(int argc, char** argv)
 	GaussianBlur(src,dst,Size(3,3),1,1);
 	//cout <<dst<<endl;
 	//imshow("dst",dst);
+
 	Mat temp, downSampleMat, expandMat;
 	
 	GassianPyramid gp2(2,4,1,1);
