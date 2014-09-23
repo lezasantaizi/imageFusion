@@ -103,6 +103,191 @@ void GassianPyramid::gassianBlur(float sigma,int winSize, Mat src, Mat& result)
 	}
 }
 
+void GassianPyramid::gassianBlur2(float sigma,int winSize, Mat src, Mat& result)
+{
+	//genGassianFunc(sigma,winSize);
+	double *kernel = new double[2*winSize+1];
+	double scale = -0.5/(sigma*sigma);  
+	const double PI = 3.141592653;  
+	double cons = 1/sqrt(-scale / PI); 
+	double sum = 0;
+
+	for (int i = 0; i<= 2*winSize+1; i++)
+	{
+		kernel[i] = 0;
+	}
+
+	for (int j = -winSize; j<=win_size; j++)
+	{
+		kernel[j+win_size] = cons * exp(j * j * scale);
+		sum += kernel[j+win_size];
+	}
+
+	for(int j = -winSize; j<=win_size; j++)  
+	{  
+		kernel[j+win_size] /= sum;  
+		printf("%f ",kernel[j+win_size]);
+	}
+
+	Mat temp;
+	temp.create(Size(src.cols,src.rows),src.type());
+	result.create(Size(src.cols,src.rows),src.type());
+
+
+	for (int row = 0 ;row <src.rows ;row++)//x orientation
+	{
+		for (int col = 0 ; col <src.cols; col++)
+		{
+			float sumRed = 0,sumGreen = 0,sumBlue = 0;
+			for (int subcol = -win_size;subcol<=win_size;subcol++)
+			{
+				int srccol = col+subcol;
+				if (srccol<0)
+				{
+					srccol *= -1;
+				}
+				if (srccol>=src.cols)
+				{
+					srccol = src.cols*2 - srccol - 2;
+				}
+
+				sumRed += kernel[subcol+win_size]*src.at<Vec3b>(row,srccol)[2];
+				sumGreen += kernel[subcol+win_size]*src.at<Vec3b>(row,srccol)[1];
+				sumBlue += kernel[subcol+win_size]*src.at<Vec3b>(row,srccol)[0];
+
+
+			}
+			temp.at<Vec3b>(row,col)[2] = sumRed;
+			temp.at<Vec3b>(row,col)[1] = sumGreen;
+			temp.at<Vec3b>(row,col)[0] = sumBlue;
+		}
+	}
+
+	for (int row = 0 ;row <src.rows ;row++)//y orientation
+	{
+		for (int col = 0 ; col <src.cols; col++)
+		{
+			float sumRed = 0,sumGreen = 0,sumBlue = 0;
+			for (int subrow = -win_size;subrow<=win_size;subrow++)
+			{
+				int srcrow = row+subrow;
+				if (srcrow<0)
+				{
+					srcrow *= -1;
+				}
+				if (srcrow>=src.rows)
+				{
+					srcrow = src.rows*2 - srcrow - 2;;
+				}
+				sumRed += kernel[subrow+win_size]*temp.at<Vec3b>(srcrow,col)[2];
+				sumGreen += kernel[subrow+win_size]*temp.at<Vec3b>(srcrow,col)[1];
+				sumBlue += kernel[subrow+win_size]*temp.at<Vec3b>(srcrow,col)[0];
+			}
+			result.at<Vec3b>(row,col)[2] = sumRed;
+			result.at<Vec3b>(row,col)[1] = sumGreen;
+			result.at<Vec3b>(row,col)[0] = sumBlue;
+		}
+	}
+
+
+}
+
+void GassianPyramid::gassianBlur3(float sigma,int winSize, Mat src, Mat& result)
+{
+	//genGassianFunc(sigma,winSize);
+	double *kernel = new double[2*winSize+1];
+	double scale = -0.5/(sigma*sigma);  
+	const double PI = 3.141592653;  
+	double cons = 1/sqrt(-scale / PI); 
+	double sum = 0;
+
+	for (int i = 0; i<= 2*winSize+1; i++)
+	{
+		kernel[i] = 0;
+	}
+
+	for (int j = -winSize; j<=win_size; j++)
+	{
+		kernel[j+win_size] = cons * exp(j * j * scale);
+		sum += kernel[j+win_size];
+	}
+
+	for(int j = -winSize; j<=win_size; j++)  
+	{  
+		kernel[j+win_size] /= sum;  
+		printf("%f ",kernel[j+win_size]);
+	}
+
+	Mat temp;
+	temp.create(Size(src.cols,src.rows),src.type());
+	result.create(Size(src.cols,src.rows),src.type());
+
+	for (int row = 0 ;row <src.rows ;row++)//y orientation
+	{
+		for (int col = 0 ; col <src.cols; col++)
+		{
+			float sumRed = 0,sumGreen = 0,sumBlue = 0;
+			for (int subrow = -win_size;subrow<=win_size;subrow++)
+			{
+				int srcrow = row+subrow;
+				//if (srcrow<0||srcrow>=src.rows)
+				//{
+				//	srcrow = row;
+				//}
+				if (srcrow<0)
+				{
+					srcrow *= -1;
+				}
+				if (srcrow>=src.rows)
+				{
+					srcrow = src.rows*2 - srcrow - 2;;
+				}
+
+				sumRed += kernel[subrow+win_size]*src.at<Vec3b>(srcrow,col)[2];
+				sumGreen += kernel[subrow+win_size]*src.at<Vec3b>(srcrow,col)[1];
+				sumBlue += kernel[subrow+win_size]*src.at<Vec3b>(srcrow,col)[0];
+
+			}
+			temp.at<Vec3b>(row,col)[2] = sumRed;
+			temp.at<Vec3b>(row,col)[1] = sumGreen;
+			temp.at<Vec3b>(row,col)[0] = sumBlue;
+		}
+	}
+
+	for (int row = 0 ;row <src.rows ;row++)//x orientation
+	{
+		for (int col = 0 ; col <src.cols; col++)
+		{
+			float sumRed = 0,sumGreen = 0,sumBlue = 0;
+			for (int subcol = -win_size;subcol<=win_size;subcol++)
+			{
+				int srccol = col+subcol;
+
+				if (srccol<0)
+				{
+					srccol *= -1;
+				}
+				if (srccol>=src.cols)
+				{
+					srccol = src.cols*2 - srccol - 2;;
+				}
+				sumRed += kernel[subcol+win_size]*temp.at<Vec3b>(row,srccol)[2];
+				sumGreen += kernel[subcol+win_size]*temp.at<Vec3b>(row,srccol)[1];
+				sumBlue += kernel[subcol+win_size]*temp.at<Vec3b>(row,srccol)[0];
+
+
+			}
+			result.at<Vec3b>(row,col)[2] = sumRed;
+			result.at<Vec3b>(row,col)[1] = sumGreen;
+			result.at<Vec3b>(row,col)[0] = sumBlue;
+		}
+	}
+
+
+
+
+}
+
 void GassianPyramid::downSampleFunc(Mat src, Mat& result)
 {
 	arr[0][0] = arr[0][4] = arr[4][0] = arr[4][4] = 1;

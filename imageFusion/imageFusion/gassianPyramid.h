@@ -30,6 +30,9 @@ public:
 
 	void genGassianFunc(float sigmaValue,int winSize);
 	void gassianBlur(float sigma,int winSize, Mat src, Mat& result);
+	void gassianBlur2(float sigma,int winSize, Mat src, Mat& result);
+	void gassianBlur3(float sigma,int winSize, Mat src, Mat& result);
+
 	void downSampleFunc(Mat src, Mat& result);
 	void expendSampleFunc(Mat src, Mat& result);
 	void printMat(Mat result);
