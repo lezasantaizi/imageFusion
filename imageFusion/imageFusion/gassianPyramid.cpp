@@ -55,21 +55,31 @@ void GassianPyramid::genGassianFunc(float sigmaValue,int winSize)
 			arrSum += arr[i+win_size][j+win_size];
 		}
 	}
-
+	printf("\n");
 	for (int i = -win_size ; i <= win_size; i++)
 	{
 		for (int j = -win_size ; j<= win_size; j++)
 		{
 			arr[i+win_size][j+win_size] /= arrSum;
-			//printf("%f ",arr[i+win_size][j+win_size]);
+			arr[i+win_size][j+win_size] *= 256;
+			printf("%f ",arr[i+win_size][j+win_size]);
 		}
-		//printf("\n");
+		printf("\n");
 	}
 }
 
 void GassianPyramid::gassianBlur(float sigma,int winSize, Mat src, Mat& result)
 {
-	genGassianFunc(sigma,winSize);
+	//genGassianFunc(sigma,winSize);
+	float arr[5][5]={1,4,6,4,1,4,16,24,16,4,6,24,36,24,6,4,16,24,16,4,1,4,6,4,1};
+	for (int i = 0;i<5;i++)
+	{
+		for (int j = 0; j<5; j++)
+		{
+			arr[i][j] /=64;
+		}
+	}
+
 	result.create(Size(src.cols,src.rows),src.type());
 	for (int row = 0 ;row <src.rows ;row++)
 	{
@@ -126,6 +136,7 @@ void GassianPyramid::gassianBlur2(float sigma,int winSize, Mat src, Mat& result)
 	for(int j = -winSize; j<=win_size; j++)  
 	{  
 		kernel[j+win_size] /= sum;  
+		//kernel[j+win_size] *= 4;
 		printf("%f ",kernel[j+win_size]);
 	}
 
@@ -239,7 +250,7 @@ void GassianPyramid::gassianBlur3(float sigma,int winSize, Mat src, Mat& result)
 				}
 				if (srcrow>=src.rows)
 				{
-					srcrow = src.rows*2 - srcrow - 2;;
+					srcrow = (src.rows - 1) - (srcrow - (src.rows-1));
 				}
 
 				sumRed += kernel[subrow+win_size]*src.at<Vec3b>(srcrow,col)[2];
@@ -268,7 +279,7 @@ void GassianPyramid::gassianBlur3(float sigma,int winSize, Mat src, Mat& result)
 				}
 				if (srccol>=src.cols)
 				{
-					srccol = src.cols*2 - srccol - 2;;
+					srccol = (src.cols - 1) - (srccol - (src.cols-1));
 				}
 				sumRed += kernel[subcol+win_size]*temp.at<Vec3b>(row,srccol)[2];
 				sumGreen += kernel[subcol+win_size]*temp.at<Vec3b>(row,srccol)[1];
@@ -295,6 +306,66 @@ void GassianPyramid::downSampleFunc(Mat src, Mat& result)
 	int oh = height/2;  
 	result.create(Size(ow,oh),src.type());
 
+	float tempArr[5][5]={1,4,6,4,1,4,16,24,16,4,6,24,36,24,6,4,16,24,16,4,1,4,6,4,1};
+	for (int i = 0;i<5;i++)
+	{
+		for (int j = 0; j<5; j++)
+		{
+			tempArr[i][j] /=256;
+		}
+	}
+	Mat temp;
+	temp.create(Size(src.cols,src.rows),src.type());
+	for (int row = 0 ;row <src.rows ;row++)
+	{
+		for (int col = 0 ; col <src.cols; col++)
+		{
+			float sumRed = 0,sumGreen = 0,sumBlue = 0;
+			for (int subrow = -win_size;subrow<=win_size;subrow++)
+			{
+				int srcrow = row+subrow;
+				//if (srcrow<0||srcrow>=src.rows)
+				//{
+				//	srcrow = row;
+				//}
+				if (srcrow<0)
+				{
+					srcrow *= -1;
+				}
+				if (srcrow>=src.rows)
+				{
+					srcrow = (src.rows - 1) - (srcrow - (src.rows-1));
+				}
+				for (int subcol = -win_size;subcol<=win_size;subcol++)
+				{
+					int srccol = col+subcol;
+					//if (srccol<0||srccol>=src.cols)
+					//{
+					//	srccol = col;
+					//}
+					if (srccol<0)
+					{
+						srccol *= -1;
+					}
+					if (srccol>=src.cols)
+					{
+						srccol = (src.cols - 1) - (srccol - (src.cols-1));
+					}
+
+					sumRed += tempArr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[2];
+					sumGreen += tempArr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[1];
+					sumBlue += tempArr[subrow+win_size][subcol+win_size]*src.at<Vec3b>(srcrow,srccol)[0];
+				}
+			}
+			temp.at<Vec3b>(row,col)[2] = sumRed;
+			temp.at<Vec3b>(row,col)[1] = sumGreen;
+			temp.at<Vec3b>(row,col)[0] = sumBlue;
+		}
+	}
+
+
+
+
 	int inRow=0, inCol = 0;  		
 	for(int row=0; row<oh; row++) 
 	{  
@@ -310,9 +381,9 @@ void GassianPyramid::downSampleFunc(Mat src, Mat& result)
 			{  
 				inCol = width;  
 			}  
-			result.at<Vec3b>(row,col)[2]= src.at<Vec3b>(inRow,inCol)[2];
-			result.at<Vec3b>(row,col)[1]= src.at<Vec3b>(inRow,inCol)[1];
-			result.at<Vec3b>(row,col)[0]= src.at<Vec3b>(inRow,inCol)[0];
+			result.at<Vec3b>(row,col)[2]= temp.at<Vec3b>(inRow,inCol)[2];
+			result.at<Vec3b>(row,col)[1]= temp.at<Vec3b>(inRow,inCol)[1];
+			result.at<Vec3b>(row,col)[0]= temp.at<Vec3b>(inRow,inCol)[0];
 			//float sumRed = 0, sumGreen = 0, sumBlue = 0;  
 			//for(int subRow = -win_size; subRow <= win_size; subRow++) 
 			//{  
@@ -347,21 +418,6 @@ void GassianPyramid::downSampleFunc(Mat src, Mat& result)
 
 void GassianPyramid::expendSampleFunc(Mat src, Mat& result)
 {
-	arr[0][0] = arr[0][4] = arr[4][0] = arr[4][4] = 1;
-	arr[0][1] = arr[0][3] = arr[1][0] = arr[1][4] = arr[3][0] = arr[3][4] = arr[4][1] = arr[4][3] = 4;
-	arr[0][2] = arr[2][0] = arr[4][2] = arr[2][4] = 6;
-	arr[1][1] = arr[1][3] = arr[3][1] = arr[3][3] = 16;
-	arr[1][2] = arr[2][1] = arr[2][3] = arr[3][2] = 24;
-	arr[2][2] = 36;
-
-	for (int i = -2; i<=2; i++)
-	{
-		for (int j = -2; j<=2; j++ )
-		{
-			arr[i+2][j+2] /= 16;
-		}
-	}
-
 	int width = src.cols;
 	int height = src.rows;
 	int ow = 2*width;  
@@ -388,52 +444,19 @@ void GassianPyramid::expendSampleFunc(Mat src, Mat& result)
 			temp.at<Vec3b>(row,col)[2] = src.at<Vec3b>(inRow,inCol)[2];
 			temp.at<Vec3b>(row,col)[1] = src.at<Vec3b>(inRow,inCol)[1];
 			temp.at<Vec3b>(row,col)[0] = src.at<Vec3b>(inRow,inCol)[0];
-
-			//float sumRed = 0, sumGreen = 0, sumBlue = 0;  
-			//for(int subRow = -win_size; subRow <= win_size; subRow++) 
-			//{  
-			//	double srcRow = (row + subRow)/2.0;  
-			//	double j = floor(srcRow);  
-			//	double t = srcRow - j;   
-			//	if(t > 0) 
-			//	{  
-			//		continue;  
-			//	}  
-			//	if(srcRow >= height || srcRow < 0) 
-			//	{  
-			//		srcRow = 0;  
-			//	}  
-			//	for(int subCol = -win_size; subCol <= win_size; subCol++) 
-			//	{  
-			//		double srcCol = (col + subCol)/2.0;  
-			//		j = floor(srcCol);  
-			//		t = srcCol - j;  
-			//		if(t > 0) 
-			//		{  
-			//			continue;  
-			//		}  
-			//		if(srcCol >= width || srcCol < 0) 
-			//		{  
-			//			srcCol = 0;  
-			//		}   
-
-			//		int red = src.at<Vec3b>(srcRow,srcCol)[2];
-			//		int green = src.at<Vec3b>(srcRow,srcCol)[1];
-			//		int blue = src.at<Vec3b>(srcRow,srcCol)[0];
-			//		sumRed += arr[subRow + win_size][subCol + win_size] * red;  
-			//		sumGreen += arr[subRow + win_size][subCol + win_size] * green;  
-			//		sumBlue += arr[subRow + win_size][subCol + win_size] * blue;  
-			//	}  
-			//}  
-			//result.at<Vec3b>(row,col)[2] = sumRed;
-			//result.at<Vec3b>(row,col)[1] = sumGreen;
-			//result.at<Vec3b>(row,col)[0] = sumBlue;
 		}  
 	}  
 
-
-
-
+	float tempArr[5][5]={1,4,6,4,1,4,16,24,16,4,6,24,36,24,6,4,16,24,16,4,1,4,6,4,1};
+	for (int i = 0;i<5;i++)
+	{
+		for (int j = 0; j<5; j++)
+		{
+			tempArr[i][j] /=64;
+		}
+	}
+	//Mat temp;
+	//temp.create(Size(src.cols,src.rows),src.type());
 	for (int row = 0 ;row <temp.rows ;row++)
 	{
 		for (int col = 0 ; col <temp.cols; col++)
@@ -442,21 +465,37 @@ void GassianPyramid::expendSampleFunc(Mat src, Mat& result)
 			for (int subrow = -win_size;subrow<=win_size;subrow++)
 			{
 				int srcrow = row+subrow;
-				if (srcrow<0||srcrow>=temp.rows)
+				//if (srcrow<0||srcrow>=src.rows)
+				//{
+				//	srcrow = row;
+				//}
+				if (srcrow<0)
 				{
-					srcrow = row;
+					srcrow *= -1;
+				}
+				if (srcrow>=temp.rows)
+				{
+					srcrow = (temp.rows - 1) - (srcrow - (temp.rows-1));
 				}
 				for (int subcol = -win_size;subcol<=win_size;subcol++)
 				{
 					int srccol = col+subcol;
-					if (srccol<0||srccol>=temp.cols)
+					//if (srccol<0||srccol>=src.cols)
+					//{
+					//	srccol = col;
+					//}
+					if (srccol<0)
 					{
-						srccol = col;
+						srccol *= -1;
 					}
-					sumRed += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[2];
-					sumGreen += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[1];
-					sumBlue += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[0];
+					if (srccol>=temp.cols)
+					{
+						srccol = (temp.cols - 1) - (srccol - (temp.cols-1));
+					}
 
+					sumRed += tempArr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[2];
+					sumGreen += tempArr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[1];
+					sumBlue += tempArr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[0];
 				}
 			}
 			result.at<Vec3b>(row,col)[2] = sumRed;
@@ -464,6 +503,38 @@ void GassianPyramid::expendSampleFunc(Mat src, Mat& result)
 			result.at<Vec3b>(row,col)[0] = sumBlue;
 		}
 	}
+
+
+	//for (int row = 0 ;row <temp.rows ;row++)
+	//{
+	//	for (int col = 0 ; col <temp.cols; col++)
+	//	{
+	//		float sumRed = 0,sumGreen = 0,sumBlue = 0;
+	//		for (int subrow = -win_size;subrow<=win_size;subrow++)
+	//		{
+	//			int srcrow = row+subrow;
+	//			if (srcrow<0||srcrow>=temp.rows)
+	//			{
+	//				srcrow = row;
+	//			}
+	//			for (int subcol = -win_size;subcol<=win_size;subcol++)
+	//			{
+	//				int srccol = col+subcol;
+	//				if (srccol<0||srccol>=temp.cols)
+	//				{
+	//					srccol = col;
+	//				}
+	//				sumRed += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[2];
+	//				sumGreen += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[1];
+	//				sumBlue += arr[subrow+win_size][subcol+win_size]*temp.at<Vec3b>(srcrow,srccol)[0];
+
+	//			}
+	//		}
+	//		result.at<Vec3b>(row,col)[2] = sumRed;
+	//		result.at<Vec3b>(row,col)[1] = sumGreen;
+	//		result.at<Vec3b>(row,col)[0] = sumBlue;
+	//	}
+	//}
 }
 
 void GassianPyramid::printMat(Mat result)

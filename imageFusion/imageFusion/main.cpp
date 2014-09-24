@@ -129,23 +129,20 @@ int main(int argc, char** argv)
 	//cout<<src<<endl;
 	//gp2.gassianBlur2(1,1,src,temp);
 	//cout <<endl;
-	gp2.gassianBlur3(1,2,src,temp);
-	gp2.downSampleFunc(temp,dst);
+	//gp2.gassianBlur3(1,2,src,temp);
+	//gp2.downSampleFunc(src,dst);
+	gp2.genGassianFunc(1,2);
+	gp2.expendSampleFunc(src,expandMat);
 
-	//imshow("temp",temp);
-	//cout<<dst-temp<<endl;
-	//imshow("diff",dst-temp);
-	//gp2.downSampleFunc(src,downSampleMat);
-	//gp2.expendSampleFunc(downSampleMat,expandMat);
-	//gp2.gassianBlur(1.6,2,temp,expandMat);
-	//imshow("result",expandMat);
 
 	//want to know the method of pyrdown and pyrup
-	pyrDown(src,downSampleMat,Size(src.cols/2, src.rows/2));
-	//pyrUp(temp,expandMat,Size( temp.cols*2, temp.rows*2 ));
-	//imshow("result",src - expandMat);
-	cout<<dst - downSampleMat<<endl;
-	imshow("result2",dst - downSampleMat);
+	//pyrDown(src,downSampleMat,Size(src.cols/2, src.rows/2));
+	//Mat srcM = (Mat_<double>(2,2) << 0,1,0,1);//,0,0,0,0,1,0,1,0);
+	pyrUp(src,temp,Size( src.cols*2, src.rows*2 ));
+	//imshow("result",temp - expandMat);
+	//cout <<endl<<srcM<<endl;
+	cout<<expandMat - temp<<endl;
+	//imshow("result2",dst - downSampleMat);
 	waitKey(0);
 
 	return 0;
