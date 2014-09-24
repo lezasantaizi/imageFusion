@@ -25,7 +25,7 @@ public:
 	vector<vector<Mat>> pyramidImage;
  
 
-	GassianPyramid(int octaveSize, int levelSize,int winSize,float sigmaValue);
+	GassianPyramid(int octaveSize, int levelSize);
 	~GassianPyramid();
 
 	void genGassianFunc(float sigmaValue,int winSize);
@@ -34,7 +34,7 @@ public:
 	void gassianBlur3(float sigma,int winSize, Mat src, Mat& result);
 
 	void downSampleFunc(Mat src, Mat& result);
-	void expendSampleFunc(Mat src, Mat& result);
+	void expendSampleFunc(Mat src, Mat& result,Size srcSize);
 	void printMat(Mat result);
 
 	void createPyramid(Mat src);
